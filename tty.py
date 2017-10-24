@@ -29,13 +29,13 @@ if __name__ == '__main__':
 
     try:
         while True:
-            r = requests.get('http://localhost:8038/cgi-bin/registers/psw')
+            r = requests.get('http://localhost:8081/cgi-bin/registers/psw')
             m = re.search(r'PSW=(.*)', r.text)
             if m:
                 hx = m.group(1).replace(" ", "")
                 scr.addstr(1, 1, hx)
-                scr.addstr(3, 1, hex_to_led(hx))
-            r = requests.get('http://localhost:8038/cgi-bin/registers/general')
+                scr.addstr(2, 1, hex_to_led(hx))
+            r = requests.get('http://localhost:8081/cgi-bin/registers/general')
             grs = re.findall(r'GR(\d\d)=(\S+)', r.text)
             for gr in grs:
                 r_num = int(gr[0])
@@ -43,6 +43,18 @@ if __name__ == '__main__':
                 scr.addstr(5 + r_num, 1, str(r_num).rjust(2))
                 scr.addstr(5 + r_num, 50, r_val)
                 scr.addstr(5 + r_num, 10, hex_to_led(r_val))
+
+            scr.move(3, 1)
+            scr.clrtoeol()
+            scr.move(3, 1)
+
+            r = requests.get('http://localhost:8081/cgi-bin/blinkenlights/devices')
+            for line in r.text.split("\n"):
+    
+                busy = re.search(r'busy', line)
+                if busy:
+                    scr.addstr(line.split(',')[1])
+                    scr.addstr(' ')
 
             scr.refresh()
             time.sleep(0.05)
