@@ -1,17 +1,6 @@
-From 4da43c40caa92c139385880d2c56c0d633a94462 Mon Sep 17 00:00:00 2001
-From: Doug Wegscheid <dwegscheid@sbcglobal.net>
-Date: Mon, 23 Oct 2017 18:39:12 -0400
-Subject: [PATCH] Add /cgi-bin/blinkenlights/cpu URL to cgibin.c.
-
----
- cgibin.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 44 insertions(+)
-
-diff --git a/cgibin.c b/cgibin.c
-index 4e95def2b..937fcb746 100644
---- a/cgibin.c
-+++ b/cgibin.c
-@@ -1108,6 +1108,49 @@ void cgibin_xml_rates_info(WEBBLK *webblk)
+--- cgibin_original.c	2017-10-24 10:51:44.538228600 -0400
++++ cgibin.c	2017-10-24 10:23:45.335542302 -0400
+@@ -1108,6 +1108,73 @@
  }
  #endif /*defined(OPTION_MIPS_COUNTING)*/
  
@@ -58,14 +47,39 @@ index 4e95def2b..937fcb746 100644
 +
 +    }
 +}
++
++void cgibin_blinkenlights_devices(WEBBLK *webblk)
++{
++DEVBLK *dev;
++char   *class;
++
++    hprintf(webblk->sock,"Expires: 0\n");
++    hprintf(webblk->sock,"Content-type: text/csv;\n\n");   /* CSV document */
++
++    for(dev = sysblk.firstdev; dev; dev = dev->nextdev)
++        if(dev->pmcw.flag5 & PMCW5_V)
++        {
++             (dev->hnd->query)(dev, &class, 0, NULL);
++
++             hprintf(webblk->sock,"DEV,%4.4X,%4.4X,%s,%4.4X,%s%s%s\n",
++                                   dev->devnum,
++                                   dev->subchan,
++                                   class,
++                                   dev->devtype,
++                                   (dev->fd > 2 ? "open " : ""),
++                                   (dev->busy ? "busy " : ""),
++                                   (IOPENDING(dev) ? "pending " : ""));
++        }
++}
  
  //  cgibin_hwrite: helper function to output HTML
  
-@@ -1248,6 +1291,7 @@ CGITAB cgidir[] = {
+@@ -1248,6 +1315,8 @@
      { "registers/general", &cgibin_reg_general },
      { "registers/control", &cgibin_reg_control },
      { "registers/psw", &cgibin_psw },
 +    { "blinkenlights/cpu", &cgibin_blinkenlights_cpu },
++    { "blinkenlights/devices", &cgibin_blinkenlights_devices },
  #if defined(OPTION_MIPS_COUNTING)
      { "xml/rates", &cgibin_xml_rates_info },
  #endif /*defined(OPTION_MIPS_COUNTING)*/
