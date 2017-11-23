@@ -2,7 +2,7 @@
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
-import logging
+import logging, argparse
 import requests
 import time
 import re
@@ -23,19 +23,26 @@ def hex_to_led(h):
     return leds
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--hercules", default='localhost:8038')
+    parser.add_argument("--verbose", action='count')
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+
     scr = curses.initscr()
     scr.keypad(0)
     curses.noecho()
 
     try:
         while True:
-            r = requests.get('http://localhost:8038/cgi-bin/registers/psw')
+            r = requests.get('http://%s/cgi-bin/registers/psw' % (args.hercules))
             m = re.search(r'PSW=(.*)', r.text)
             if m:
                 hx = m.group(1).replace(" ", "")
                 scr.addstr(1, 1, hx)
                 scr.addstr(3, 1, hex_to_led(hx))
-            r = requests.get('http://localhost:8038/cgi-bin/registers/general')
+            r = requests.get('http://%s/cgi-bin/registers/general' % (args.hercules))
             grs = re.findall(r'GR(\d\d)=(\S+)', r.text)
             for gr in grs:
                 r_num = int(gr[0])
