@@ -64,14 +64,14 @@ if __name__ == '__main__':
                 leds(scr, 2, 1, bn, psw=True)
 
                 wait = bn[14:15]
-                scr.addstr(3, 1, 'wait: ')
-                scr.addstr(3, 7, wait)
-                leds(scr, 3, 10, wait)
-
-                problem_supervisor = bn[15:16]
-                scr.addstr(4, 1, 'p/s: ')
+                scr.addstr(4, 1, 'wait: ')
                 scr.addstr(4, 7, wait)
                 leds(scr, 4, 10, wait)
+
+                problem_supervisor = bn[15:16]
+                scr.addstr(4, 21, 's/p: ')
+                scr.addstr(4, 27, problem_supervisor)
+                leds(scr, 4, 30, problem_supervisor)
 
             r = requests.get('http://%s/cgi-bin/registers/general' % (args.hercules))
             grs = re.findall(r'GR(\d\d)=(\S+)', r.text)
@@ -88,12 +88,26 @@ if __name__ == '__main__':
             scr.move(3, 1)
 
             r = requests.get('http://%s/cgi-bin/blinkenlights/devices' % (args.hercules))
+
+            channels = set()
             for line in r.text.split("\n"):
     
                 busy = re.search(r'busy', line)
                 if busy:
-                    scr.addstr(line.split(',')[1])
+                    dev = line.split(',')[1]
+                    channel = dev[1:2]
+                    channels.add(channel)
+
+            #scr.addstr(str(channels))
+            for channel in xrange(0, 16):
+                c_channel = format(channel, 'X')
+                if c_channel in channels:
+                    scr.addstr(c_channel)
+                else:
                     scr.addstr(' ')
+
+            #scr.addstr(line.split(',')[1])
+            #scr.addstr(' ')
 
             scr.refresh()
             time.sleep(0.05)
